@@ -5,7 +5,10 @@ export class Medication {
         name = '',
         dosage = '',
         times = [],
-        frequency = 'daily',
+        frequency = 'daily', // Legacy field, kept for backward compatibility
+        frequencyType = 'daily', // 'daily', 'specific_days', 'interval'
+        selectedDays = [], // Array of numbers 0-6 (Sun-Sat)
+        intervalDays = 1, // Number of days for interval
         startDate = new Date(),
         notes = '',
         isActive = true,
@@ -14,7 +17,10 @@ export class Medication {
         this.name = name;
         this.dosage = dosage;
         this.times = times; // Array of time strings like ["08:00", "20:00"]
-        this.frequency = frequency; // 'daily', 'twice_daily', 'three_times_daily', etc.
+        this.frequency = frequency;
+        this.frequencyType = frequencyType;
+        this.selectedDays = selectedDays; // 0 = Sunday, 1 = Monday, etc.
+        this.intervalDays = intervalDays;
         this.startDate = startDate;
         this.notes = notes;
         this.isActive = isActive;
@@ -28,6 +34,9 @@ export class Medication {
             dosage: this.dosage,
             times: this.times,
             frequency: this.frequency,
+            frequencyType: this.frequencyType,
+            selectedDays: this.selectedDays,
+            intervalDays: this.intervalDays,
             startDate: this.startDate.toISOString(),
             notes: this.notes,
             isActive: this.isActive,

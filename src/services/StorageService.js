@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Medication } from '../models/Medication';
 import { MedicationLog } from '../models/MedicationLog';
+import NotificationService from './NotificationService';
 
 const KEYS = {
     MEDICATIONS: '@medtenance_medications',
@@ -40,6 +41,7 @@ class StorageService {
             const medications = await this.getMedications();
             medications.push(medication);
             await this.saveMedications(medications);
+            await NotificationService.scheduleAllMedications(medications);
             return true;
         } catch (error) {
             console.error('Error adding medication:', error);
@@ -54,6 +56,7 @@ class StorageService {
             if (index !== -1) {
                 medications[index] = updatedMedication;
                 await this.saveMedications(medications);
+                await NotificationService.scheduleAllMedications(medications);
                 return true;
             }
             return false;
@@ -68,6 +71,7 @@ class StorageService {
             const medications = await this.getMedications();
             const filtered = medications.filter(med => med.id !== medicationId);
             await this.saveMedications(filtered);
+            await NotificationService.scheduleAllMedications(filtered);
             return true;
         } catch (error) {
             console.error('Error deleting medication:', error);
@@ -154,6 +158,15 @@ class StorageService {
         } catch (error) {
             console.error('Error clearing data:', error);
             return false;
+        }
+    }
+
+    async refreshNotifications() {
+        try {
+            const medications = await this.getMedications();
+            await NotificationService.scheduleAllMedications(medications);
+        } catch (error) {
+            console.error('Error refreshing notifications:', error);
         }
     }
 }

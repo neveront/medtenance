@@ -1,4 +1,6 @@
 import React, { useEffect } from 'react';
+import { Platform } from 'react-native';
+import * as Notifications from 'expo-notifications';
 import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
 import BottomTabNavigator from './src/navigation/BottomTabNavigator';
@@ -6,12 +8,36 @@ import StorageService from './src/services/StorageService';
 import { Medication } from './src/models/Medication';
 import { MedicationLog } from './src/models/MedicationLog';
 
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
+if (Platform.OS === 'android') {
+  Notifications.setNotificationChannelAsync('default', {
+    name: 'default',
+    importance: Notifications.AndroidImportance.MAX,
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: '#FF231F7C',
+  });
+}
+
 export default function App() {
   useEffect(() => {
     initializeSampleData();
   }, []);
 
   const initializeSampleData = async () => {
+    // Request notification permissions
+    await Notifications.requestPermissionsAsync();
+
+    // Refresh notifications to ensure schedule is topped up
+    await StorageService.refreshNotifications();
+
     // Check if we already have data
     const existingMeds = await StorageService.getMedications();
 
