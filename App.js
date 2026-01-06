@@ -1,20 +1,106 @@
+import React, { useEffect } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import BottomTabNavigator from './src/navigation/BottomTabNavigator';
+import StorageService from './src/services/StorageService';
+import { Medication } from './src/models/Medication';
+import { MedicationLog } from './src/models/MedicationLog';
 
 export default function App() {
+  useEffect(() => {
+    initializeSampleData();
+  }, []);
+
+  const initializeSampleData = async () => {
+    // Check if we already have data
+    const existingMeds = await StorageService.getMedications();
+
+    if (existingMeds.length === 0) {
+      // Add sample medications matching the Canva design
+      const aspirin = new Medication({
+        name: 'Aspirin',
+        dosage: '100mg',
+        times: ['08:00'],
+        frequency: 'daily',
+        notes: 'Take with food',
+      });
+
+      const metformin = new Medication({
+        name: 'Metformin',
+        dosage: '500mg',
+        times: ['08:00', '20:00'],
+        frequency: 'twice_daily',
+        notes: 'For diabetes management',
+      });
+
+      const lisinopril = new Medication({
+        name: 'Lisinopril',
+        dosage: '10mg',
+        times: ['21:00'],
+        frequency: 'daily',
+        notes: 'Blood pressure medication',
+      });
+
+      await StorageService.addMedication(aspirin);
+      await StorageService.addMedication(metformin);
+      await StorageService.addMedication(lisinopril);
+
+      // Add some sample logs for the week
+      const today = new Date();
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+
+        // Aspirin 8:00 AM
+        const aspirinLog = new MedicationLog({
+          medicationId: aspirin.id,
+          medicationName: `${aspirin.name} ${aspirin.dosage}`,
+          scheduledTime: new Date(date.setHours(8, 0, 0, 0)),
+          takenTime: i < 6 ? new Date(date.setHours(8, 15, 0, 0)) : null,
+          status: i < 6 ? 'taken' : 'pending',
+        });
+
+        // Metformin 8:00 AM
+        const metforminAM = new MedicationLog({
+          medicationId: metformin.id,
+          medicationName: `${metformin.name} ${metformin.dosage}`,
+          scheduledTime: new Date(date.setHours(8, 0, 0, 0)),
+          takenTime: i < 6 ? new Date(date.setHours(8, 20, 0, 0)) : null,
+          status: i < 6 ? 'taken' : 'pending',
+        });
+
+        // Metformin 8:00 PM
+        const metforminPM = new MedicationLog({
+          medicationId: metformin.id,
+          medicationName: `${metformin.name} ${metformin.dosage}`,
+          scheduledTime: new Date(date.setHours(20, 0, 0, 0)),
+          takenTime: i < 6 && i !== 2 ? new Date(date.setHours(20, 10, 0, 0)) : null,
+          status: i < 6 && i !== 2 ? 'taken' : (i === 2 ? 'missed' : 'pending'),
+        });
+
+        // Lisinopril 9:00 PM
+        const lisinoprilLog = new MedicationLog({
+          medicationId: lisinopril.id,
+          medicationName: `${lisinopril.name} ${lisinopril.dosage}`,
+          scheduledTime: new Date(date.setHours(21, 0, 0, 0)),
+          takenTime: i < 6 && i !== 1 ? new Date(date.setHours(21, 5, 0, 0)) : null,
+          status: i < 6 && i !== 1 ? 'taken' : (i === 1 ? 'missed' : 'pending'),
+        });
+
+        if (i < 6) {
+          await StorageService.addLog(aspirinLog);
+          await StorageService.addLog(metforminAM);
+          await StorageService.addLog(metforminPM);
+          await StorageService.addLog(lisinoprilLog);
+        }
+      }
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+      <StatusBar style="dark" />
+      <BottomTabNavigator />
+    </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
