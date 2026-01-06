@@ -41,7 +41,8 @@ class StorageService {
             const medications = await this.getMedications();
             medications.push(medication);
             await this.saveMedications(medications);
-            await NotificationService.scheduleAllMedications(medications);
+            // Don't await scheduling to keep UI responsive
+            NotificationService.scheduleAllMedications(medications).catch(e => console.error(e));
             return true;
         } catch (error) {
             console.error('Error adding medication:', error);
@@ -56,7 +57,8 @@ class StorageService {
             if (index !== -1) {
                 medications[index] = updatedMedication;
                 await this.saveMedications(medications);
-                await NotificationService.scheduleAllMedications(medications);
+                // Don't await scheduling to keep UI responsive
+                NotificationService.scheduleAllMedications(medications).catch(e => console.error(e));
                 return true;
             }
             return false;
@@ -71,7 +73,8 @@ class StorageService {
             const medications = await this.getMedications();
             const filtered = medications.filter(med => med.id !== medicationId);
             await this.saveMedications(filtered);
-            await NotificationService.scheduleAllMedications(filtered);
+            // Don't await scheduling to keep UI responsive
+            NotificationService.scheduleAllMedications(filtered).catch(e => console.error(e));
             return true;
         } catch (error) {
             console.error('Error deleting medication:', error);

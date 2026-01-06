@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
 import Header from '../components/Header';
 import MedicationCard from '../components/MedicationCard';
@@ -13,30 +14,65 @@ const HomeScreen = () => {
     const [todayMedications, setTodayMedications] = useState([]);
     const [weeklyAdherence, setWeeklyAdherence] = useState([85, 90, 75, 100, 95, 80, 90]);
 
-    useEffect(() => {
-        loadTodayMedications();
-        calculateWeeklyAdherence();
-    }, []);
+    useFocusEffect(
+        useCallback(() => {
+            loadTodayMedications();
+            calculateWeeklyAdherence();
+        }, [])
+    );
 
     const loadTodayMedications = async () => {
         const medications = await StorageService.getMedications();
         const logs = await StorageService.getLogsByDate(new Date());
+        const today = new Date();
+        const dayOfWeek = today.getDay(); // 0-6 Sun-Sat
 
         // Create medication schedule for today
         const schedule = [];
         medications.forEach(med => {
-            med.times.forEach(time => {
-                const existingLog = logs.find(
-                    log => log.medicationId === med.id && log.scheduledTime.includes(time)
-                );
+            // Check if medication is scheduled for today
+            let isScheduledToday = false;
 
-                schedule.push({
-                    medication: med,
-                    time: time,
-                    status: existingLog ? existingLog.status : 'pending',
-                    logId: existingLog ? existingLog.id : null,
+            if (!med.isActive) return;
+
+            if (med.frequencyType === 'daily' || med.frequency === 'daily' || med.frequency === 'twice_daily') {
+                isScheduledToday = true;
+            } else if (med.frequencyType === 'specific_days') {
+                if (med.selectedDays && med.selectedDays.includes(dayOfWeek)) {
+                    isScheduledToday = true;
+                }
+            } else if (med.frequencyType === 'interval') {
+                const startDate = new Date(med.startDate);
+                startDate.setHours(0, 0, 0, 0);
+                const todayMidnight = new Date();
+                todayMidnight.setHours(0, 0, 0, 0);
+
+                const diffTime = todayMidnight.getTime() - startDate.getTime();
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+                if (diffDays >= 0 && (diffDays % med.intervalDays === 0)) {
+                    isScheduledToday = true;
+                }
+            }
+
+            if (isScheduledToday) {
+                med.times.forEach(time => {
+                    // Correctly match log by checking medicationId and approximate time matching
+                    const existingLog = logs.find(log => {
+                        if (log.medicationId !== med.id) return false;
+                        const logDate = new Date(log.scheduledTime);
+                        const [h, m] = time.split(':');
+                        return logDate.getHours() === parseInt(h) && logDate.getMinutes() === parseInt(m);
+                    });
+
+                    schedule.push({
+                        medication: med,
+                        time: time,
+                        status: existingLog ? existingLog.status : 'pending',
+                        logId: existingLog ? existingLog.id : null,
+                    });
                 });
-            });
+            }
         });
 
         // Sort by time
@@ -46,6 +82,7 @@ const HomeScreen = () => {
 
     const calculateWeeklyAdherence = async () => {
         const logs = await StorageService.getLogs();
+        const medications = await StorageService.getMedications();
         const today = new Date();
         const weekData = [];
 
@@ -54,15 +91,25 @@ const HomeScreen = () => {
             date.setDate(date.getDate() - i);
             date.setHours(0, 0, 0, 0);
 
+            // 1. Calculate Total Scheduled for this date
+            let totalScheduledCount = 0;
+            medications.forEach(med => {
+                if (med.isScheduledForDate(date)) {
+                    totalScheduledCount += med.times.length;
+                }
+            });
+
+            // 2. Calculate Taken Count for this date
             const dayLogs = logs.filter(log => {
                 const logDate = new Date(log.scheduledTime);
                 logDate.setHours(0, 0, 0, 0);
-                return logDate.getTime() === date.getTime();
+                return logDate.getTime() === date.getTime() && log.status === 'taken';
             });
 
-            if (dayLogs.length > 0) {
-                const takenCount = dayLogs.filter(log => log.status === 'taken').length;
-                const percentage = Math.round((takenCount / dayLogs.length) * 100);
+            const takenCount = dayLogs.length;
+
+            if (totalScheduledCount > 0) {
+                const percentage = Math.round((takenCount / totalScheduledCount) * 100);
                 weekData.push(percentage);
             } else {
                 weekData.push(0);

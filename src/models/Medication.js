@@ -1,5 +1,29 @@
 // Medication Model
 export class Medication {
+    isScheduledForDate(date) {
+        if (!this.isActive) return false;
+
+        const targetDate = new Date(date);
+        const dayOfWeek = targetDate.getDay(); // 0-6 Sun-Sat
+
+        if (this.frequencyType === 'daily' || this.frequency === 'daily' || this.frequency === 'twice_daily') {
+            return true;
+        } else if (this.frequencyType === 'specific_days') {
+            return this.selectedDays && this.selectedDays.includes(dayOfWeek);
+        } else if (this.frequencyType === 'interval') {
+            const start = new Date(this.startDate);
+            start.setHours(0, 0, 0, 0);
+            const target = new Date(targetDate);
+            target.setHours(0, 0, 0, 0);
+
+            const diffTime = target.getTime() - start.getTime();
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+            return diffDays >= 0 && (diffDays % this.intervalDays === 0);
+        }
+        return false;
+    }
+
     constructor({
         id = null,
         name = '',
