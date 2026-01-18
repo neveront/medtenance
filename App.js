@@ -1,13 +1,19 @@
-import React, { useEffect } from 'react';
-import { Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Platform, View, ActivityIndicator } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from './src/services/firebaseConfig';
 import BottomTabNavigator from './src/navigation/BottomTabNavigator';
+import AuthScreen from './src/screens/AuthScreen';
 import StorageService from './src/services/StorageService';
 import { Medication } from './src/models/Medication';
 import { MedicationLog } from './src/models/MedicationLog';
+import SyncService from './src/services/SyncService';
 
+const Stack = createNativeStackNavigator();
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -27,13 +33,37 @@ if (Platform.OS === 'android') {
 }
 
 export default function App() {
+  const [initializing, setInitializing] = useState(true);
+  const [user, setUser] = useState(null);
+
+  // Handle user state changes
+  function onAuthStateChangedHandler(user) {
+    setUser(user);
+    if (initializing) setInitializing(false);
+
+    // If user logs in/out, re-init sync if needed
+    if (user && !initializing) {
+      SyncService.initialize();
+    }
+  }
+
+  useEffect(() => {
+    const subscriber = onAuthStateChanged(auth, onAuthStateChangedHandler);
+    return subscriber; // unsubscribe on unmount
+  }, []);
+
   useEffect(() => {
     initializeSampleData();
-  }, []);
+    // SyncService is initialized in auth listener or manually here if needed
+    // But better to wait for auth state to be known.
+    if (user) {
+      SyncService.initialize();
+    }
+  }, [user]);
 
   const initializeSampleData = async () => {
     // Request notification permissions
-    await Notifications.requestPermissionsAsync();
+    const { status } = await Notifications.requestPermissionsAsync();
 
     // Refresh notifications to ensure schedule is topped up
     await StorageService.refreshNotifications();
@@ -123,10 +153,25 @@ export default function App() {
     }
   };
 
+  if (initializing) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#4A90E2" />
+      </View>
+    );
+  }
+
   return (
     <NavigationContainer>
       <StatusBar style="dark" />
-      <BottomTabNavigator />
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {user ? (
+          <Stack.Screen name="Main" component={BottomTabNavigator} />
+        ) : (
+          <Stack.Screen name="Auth" component={AuthScreen} />
+        )}
+      </Stack.Navigator>
     </NavigationContainer>
   );
 }
+

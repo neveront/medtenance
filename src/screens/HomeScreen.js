@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import Header from '../components/Header';
 import MedicationCard from '../components/MedicationCard';
 import AdherenceChart from '../components/AdherenceChart';
@@ -9,6 +9,9 @@ import { MedicationLog } from '../models/MedicationLog';
 import colors from '../theme/colors';
 import { typography, spacing } from '../theme/styles';
 import { globalStyles } from '../theme/styles';
+import { Ionicons } from '@expo/vector-icons';
+import { logoutUser } from '../services/firebaseConfig';
+import { Alert, TouchableOpacity } from 'react-native';
 
 const HomeScreen = () => {
     const [todayMedications, setTodayMedications] = useState([]);
@@ -140,9 +143,30 @@ const HomeScreen = () => {
         calculateWeeklyAdherence();
     };
 
+    const handleLogout = () => {
+        Alert.alert(
+            "Log Out",
+            "Are you sure you want to log out?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Log Out",
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await logoutUser();
+                        } catch (e) {
+                            Alert.alert("Error", "Could not log out");
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
     return (
         <SafeAreaView style={globalStyles.safeArea}>
-            <Header />
+            <Header onProfilePress={handleLogout} />
             <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Today</Text>

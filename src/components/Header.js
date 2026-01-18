@@ -4,14 +4,16 @@ import { Ionicons } from '@expo/vector-icons';
 import colors from '../theme/colors';
 import { typography, spacing, borderRadius } from '../theme/styles';
 
-const Header = ({ title = 'Medtenance', showProfile = true }) => {
+import { TouchableOpacity } from 'react-native';
+
+const Header = ({ title = 'Medtenance', showProfile = true, onProfilePress }) => {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>{title}</Text>
             {showProfile && (
-                <View style={styles.profileIcon}>
-                    <Ionicons name="person-circle-outline" size={32} color={colors.primary} />
-                </View>
+                <TouchableOpacity onPress={onProfilePress} style={styles.profileIcon}>
+                    <Ionicons name="log-out-outline" size={28} color={colors.primary} />
+                </TouchableOpacity>
             )}
         </View>
     );

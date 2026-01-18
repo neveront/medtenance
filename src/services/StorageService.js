@@ -43,6 +43,13 @@ class StorageService {
             await this.saveMedications(medications);
             // Don't await scheduling to keep UI responsive
             NotificationService.scheduleAllMedications(medications).catch(e => console.error(e));
+
+            // Trigger Sync
+            try {
+                const SyncService = require('./SyncService').default;
+                SyncService.syncUp();
+            } catch (e) { console.log('Sync init failed', e); }
+
             return true;
         } catch (error) {
             console.error('Error adding medication:', error);
@@ -59,6 +66,13 @@ class StorageService {
                 await this.saveMedications(medications);
                 // Don't await scheduling to keep UI responsive
                 NotificationService.scheduleAllMedications(medications).catch(e => console.error(e));
+
+                // Trigger Sync
+                try {
+                    const SyncService = require('./SyncService').default;
+                    SyncService.syncUp();
+                } catch (e) { console.log('Sync init failed', e); }
+
                 return true;
             }
             return false;
@@ -75,6 +89,13 @@ class StorageService {
             await this.saveMedications(filtered);
             // Don't await scheduling to keep UI responsive
             NotificationService.scheduleAllMedications(filtered).catch(e => console.error(e));
+
+            // Trigger Sync
+            try {
+                const SyncService = require('./SyncService').default;
+                SyncService.syncUp();
+            } catch (e) { console.log('Sync init failed', e); }
+
             return true;
         } catch (error) {
             console.error('Error deleting medication:', error);
@@ -113,6 +134,13 @@ class StorageService {
             const logs = await this.getLogs();
             logs.push(log);
             await this.saveLogs(logs);
+
+            // Trigger Sync
+            try {
+                const SyncService = require('./SyncService').default;
+                SyncService.syncUp();
+            } catch (e) { console.log('Sync init failed', e); }
+
             return true;
         } catch (error) {
             console.error('Error adding log:', error);
@@ -144,6 +172,13 @@ class StorageService {
             if (index !== -1) {
                 logs[index] = updatedLog;
                 await this.saveLogs(logs);
+
+                // Trigger Sync
+                try {
+                    const SyncService = require('./SyncService').default;
+                    SyncService.syncUp();
+                } catch (e) { console.log('Sync init failed', e); }
+
                 return true;
             }
             return false;
