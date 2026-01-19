@@ -38,7 +38,6 @@ export const signInAnonymous = async () => {
         const userCredential = await signInAnonymously(auth);
         return userCredential.user;
     } catch (error) {
-        console.error("Error signing in anonymously:", error);
         throw error;
     }
 };
@@ -58,7 +57,6 @@ export const registerUser = async (email, password) => {
             return userCredential.user;
         }
     } catch (error) {
-        console.error("Error registering user:", error);
         throw error;
     }
 }
@@ -69,7 +67,6 @@ export const loginUser = async (email, password) => {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         return userCredential.user;
     } catch (error) {
-        console.error("Error logging in:", error);
         throw error;
     }
 }
@@ -79,7 +76,6 @@ export const logoutUser = async () => {
     try {
         await firebaseSignOut(auth);
     } catch (error) {
-        console.error("Error signing out:", error);
         throw error;
     }
 }

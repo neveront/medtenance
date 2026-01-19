@@ -41,11 +41,18 @@ const AuthScreen = ({ navigation }) => {
             // navigation.replace('Main'); 
         } catch (error) {
             let msg = error.message;
-            if (error.code === 'auth/email-already-in-use') msg = 'That email is already in use.';
+            if (error.code === 'auth/email-already-in-use') {
+                msg = isLogin
+                    ? 'No user found with that email or incorrect password.'
+                    : 'That email is already in use. Try logging in instead.';
+            }
             if (error.code === 'auth/invalid-email') msg = 'That email address is invalid.';
             if (error.code === 'auth/user-not-found') msg = 'No user found with that email.';
             if (error.code === 'auth/wrong-password') msg = 'Incorrect password.';
             if (error.code === 'auth/credential-already-in-use') msg = 'This email is already associated with another account.';
+            if (error.code === 'auth/email-already-in-use' && !isLogin) {
+                msg = 'This email is already registered. If you want to save your guest data to this account, you must log in to it (though data merging is limited).';
+            }
 
             Alert.alert('Authentication Failed', msg);
         } finally {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, SafeAreaView, Alert, TouchableOpacity } from 'react-native';
 import Header from '../components/Header';
 import MedicationCard from '../components/MedicationCard';
 import AdherenceChart from '../components/AdherenceChart';
@@ -11,7 +11,6 @@ import { typography, spacing } from '../theme/styles';
 import { globalStyles } from '../theme/styles';
 import { Ionicons } from '@expo/vector-icons';
 import { logoutUser } from '../services/firebaseConfig';
-import { Alert, TouchableOpacity } from 'react-native';
 
 const HomeScreen = () => {
     const [todayMedications, setTodayMedications] = useState([]);
