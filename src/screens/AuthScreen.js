@@ -15,7 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import colors from '../theme/colors';
 import { Typography } from '../theme/styles';
-import { registerUser, loginUser, signInAnonymous } from '../services/firebaseConfig';
+import { registerUser, loginUser, signInAnonymous, signInWithGoogle } from '../services/firebaseConfig';
 
 
 const AuthScreen = ({ navigation }) => {
@@ -66,6 +66,22 @@ const AuthScreen = ({ navigation }) => {
             await signInAnonymous();
         } catch (error) {
             Alert.alert('Error', 'Could not sign in as guest.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGoogleSignIn = async () => {
+        setLoading(true);
+        try {
+            await signInWithGoogle();
+        } catch (error) {
+            if (error.code !== 'SIGN_IN_CANCELLED') {
+                const msg = error.message?.includes('Expo Go')
+                    ? error.message
+                    : 'Google sign in failed. Please try again.';
+                Alert.alert('Not Supported', msg);
+            }
         } finally {
             setLoading(false);
         }
@@ -129,6 +145,20 @@ const AuthScreen = ({ navigation }) => {
                                 ) : (
                                     <Text style={styles.buttonText}>{isLogin ? 'Log In' : 'Create Account'}</Text>
                                 )}
+                            </TouchableOpacity>
+
+                            <View style={styles.divider}>
+                                <View style={styles.dividerLine} />
+                                <Text style={styles.dividerText}>OR</Text>
+                                <View style={styles.dividerLine} />
+                            </View>
+
+                            <TouchableOpacity
+                                style={styles.googleButton}
+                                onPress={handleGoogleSignIn}
+                                disabled={loading}
+                            >
+                                <Text style={styles.googleButtonText}>Continue with Google</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -264,6 +294,35 @@ const styles = StyleSheet.create({
         fontSize: 12,
         marginTop: 10,
         paddingHorizontal: 20,
+    },
+    divider: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 20,
+    },
+    dividerLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: colors.borderLight,
+    },
+    dividerText: {
+        paddingHorizontal: 10,
+        color: colors.textLight,
+        fontSize: 12,
+        fontWeight: 'bold',
+    },
+    googleButton: {
+        backgroundColor: '#fff',
+        borderWidth: 1,
+        borderColor: colors.borderLight,
+        borderRadius: 12,
+        paddingVertical: 16,
+        alignItems: 'center',
+    },
+    googleButtonText: {
+        color: colors.text,
+        fontSize: 16,
+        fontWeight: 'bold',
     }
 });
 

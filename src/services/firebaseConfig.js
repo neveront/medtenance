@@ -2,7 +2,7 @@
 
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
-import { getAuth, signInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as firebaseSignOut, linkWithCredential, EmailAuthProvider, initializeAuth, getReactNativePersistence } from 'firebase/auth';
+import { getAuth, signInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as firebaseSignOut, linkWithCredential, EmailAuthProvider, initializeAuth, getReactNativePersistence, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
 import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
 
 // ... config ...
@@ -67,6 +67,48 @@ export const loginUser = async (email, password) => {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         return userCredential.user;
     } catch (error) {
+        throw error;
+    }
+}
+
+export const signInWithGoogle = async () => {
+    if (!auth) return null;
+
+    let isExpoGo = false;
+    try {
+        const Constants = require('expo-constants').default || require('expo-constants');
+        const executionEnv = Constants?.executionEnvironment || Constants?.expoConfig?.extra?.executionEnvironment;
+        isExpoGo = executionEnv === 'storeClient' || Constants?.appOwnership === 'expo';
+    } catch (e) {
+        console.warn("Could not detect execution environment");
+    }
+
+    if (isExpoGo) {
+        throw new Error('Google Sign-In requires native modules not available in Expo Go. Please use a Development Build.');
+    }
+
+    try {
+        const GoogleSigninModule = require('@react-native-google-signin/google-signin');
+        const GoogleSignin = GoogleSigninModule.GoogleSignin || GoogleSigninModule;
+
+        if (!GoogleSignin || typeof GoogleSignin.hasPlayServices !== 'function') {
+            throw new Error('Google Sign-In native module not found.');
+        }
+
+        GoogleSignin.configure({
+            webClientId: '1052269138410-xxxxxxxx.apps.googleusercontent.com',
+            offlineAccess: true,
+        });
+
+        await GoogleSignin.hasPlayServices();
+        const { data } = await GoogleSignin.signIn();
+        const googleCredential = GoogleAuthProvider.credential(data.idToken);
+        const userCredential = await signInWithCredential(auth, googleCredential);
+        return userCredential.user;
+    } catch (error) {
+        if (error.message?.includes('could not be found') || error.message?.includes('RNGoogleSignin')) {
+            throw new Error('Google Sign-In is not supported in Expo Go. Please use a Development Build.');
+        }
         throw error;
     }
 }
