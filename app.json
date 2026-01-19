@@ -29,6 +29,11 @@
     "plugins": [
       "@react-native-google-signin/google-signin",
       "expo-asset"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "82456be8-3cf0-44f7-a764-7b98f746e33f"
+      }
+    }
   }
 }

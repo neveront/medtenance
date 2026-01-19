@@ -96,7 +96,7 @@ export const signInWithGoogle = async () => {
         }
 
         GoogleSignin.configure({
-            webClientId: '1052269138410-xxxxxxxx.apps.googleusercontent.com',
+            webClientId: '1052269138410-tae1sguiuvujiqqng3fk54oshgl719vk.apps.googleusercontent.com',
             offlineAccess: true,
         });
 

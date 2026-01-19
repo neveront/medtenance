@@ -77,10 +77,10 @@ const AuthScreen = ({ navigation }) => {
             await signInWithGoogle();
         } catch (error) {
             if (error.code !== 'SIGN_IN_CANCELLED') {
-                const msg = error.message?.includes('Expo Go')
-                    ? error.message
-                    : 'Google sign in failed. Please try again.';
-                Alert.alert('Not Supported', msg);
+                const isExpoError = error.message?.includes('Expo Go');
+                const title = isExpoError ? 'Not Supported' : 'Google Error';
+                const msg = isExpoError ? error.message : `${error.message}\n\n(Code: ${error.code})`;
+                Alert.alert(title, msg);
             }
         } finally {
             setLoading(false);
